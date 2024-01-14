@@ -1,6 +1,7 @@
 # Flask app
 from flask import Flask, render_template, jsonify, request
 import psycopg2
+import json
 
 app = Flask(__name__)
 
@@ -86,7 +87,11 @@ def seleccionar_fees():
 
 # Nueva ruta para manejar la consulta a la tabla precios_fijo
 @app.route('/consulta_resultados', methods=['POST'])
+
 def consulta_resultados():
+    
+    print("request url:", request.url)
+    print("request:", request.form)
     cia_seleccionada = request.form.get('cia')
     metodo_seleccionado = request.form.get('metodo')
     sistema_seleccionado = request.form.get('sistema')
@@ -111,14 +116,21 @@ def consulta_resultados():
         """
         
         cursor.execute(consulta_datos)
-        datos = [fila[0] for fila in cursor.fetchall()]
+        res = []
 
-        # Cerrar el cursor y la conexión
-        cursor.close()
+        data = cursor.fetchall()
+        res.append(data)
+        """for row in data:
+            res.append({
+                'resultado': row[0]
+            })"""
+
+        json_data = json.dumps(res, indent=2)
+
+        cursor.close()  
         conn.close()
 
-        # Devolver las Fees como respuesta JSON
-        return jsonify({'resultado': datos})
+        return json_data
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
