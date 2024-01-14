@@ -17,6 +17,7 @@ config = {
 # Ruta para mostrar el formulario
 @app.route('/', methods=['GET'])
 def consultar_cias():
+    tarifas_seleccionadas = request.form.get('tarifas')
     try:
         # Conectar a la base de datos
         conn = psycopg2.connect(**config)
@@ -28,10 +29,13 @@ def consultar_cias():
         consulta_cias = "SELECT DISTINCT cia FROM precios_fijo"
         cursor.execute(consulta_cias)
         cias = [fila[0] for fila in cursor.fetchall()]
+        
 
         # Consulta SQL para Fees (usando la primera CIA como ejemplo)
+
         primera_cia = cias[0] if cias else None
-        consulta_fees = f"SELECT DISTINCT producto_cia FROM precios_fijo WHERE cia = '{primera_cia}'"
+        
+        consulta_fees = f"SELECT DISTINCT producto_cia FROM precios_fijo WHERE cia = '{primera_cia}' AND tarifa = '{tarifas_seleccionadas}'"
         cursor.execute(consulta_fees)
         fees = [fila[0] for fila in cursor.fetchall()]
 
@@ -49,6 +53,7 @@ def consultar_cias():
 def seleccionar_fees():
     cia_seleccionada = request.form.get('cia')
     metodo_seleccionado = request.form.get('metodo')
+    tarifas_seleccionadas = request.form.get('tarifas')
 
     try:
         # Conectar a la base de datos
@@ -59,7 +64,7 @@ def seleccionar_fees():
 
         # Consulta SQL para Fees
         if metodo_seleccionado == 'INDEXADO':
-            consulta_fees = f"SELECT DISTINCT fee FROM precios_index_energia WHERE cia = '{cia_seleccionada}'"
+            consulta_fees = f"SELECT DISTINCT fee FROM precios_index_energia WHERE cia = '{cia_seleccionada}'AND tarifa = '{tarifas_seleccionadas}'"
             cursor.execute(consulta_fees)
             fees = [fila[0] for fila in cursor.fetchall()]
 
@@ -71,7 +76,7 @@ def seleccionar_fees():
             return jsonify({'fees': fees})
         
         elif metodo_seleccionado == 'FIJO':
-            consulta_fees = f"SELECT DISTINCT producto_cia FROM precios_fijo WHERE cia = '{cia_seleccionada}'"
+            consulta_fees = f"SELECT DISTINCT producto_cia FROM precios_fijo WHERE cia = '{cia_seleccionada}' AND tarifa = '{tarifas_seleccionadas}'"
             cursor.execute(consulta_fees)
             fees = [fila[0] for fila in cursor.fetchall()]
 
