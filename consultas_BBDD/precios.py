@@ -14,7 +14,7 @@ config = {
     'database': 'postgres'
 }
 
-def consulta_resultados(sistema, tarifa, cia, metodo, producto_cia):
+def consulta_resultados(sistema, tarifa, cia, metodo, producto_cia, fee):
     
     print("request url:", request.url)
     print("request:", request.form)
@@ -24,13 +24,14 @@ def consulta_resultados(sistema, tarifa, cia, metodo, producto_cia):
     cia_seleccionada = cia
     metodo_seleccionado = metodo
     producto_cia_seleccionada = producto_cia
+    fee_seleccionado = fee
 
     print("sistema_seleccionado:", sistema_seleccionado)
     print("tarifa_seleccionada:", tarifa_seleccionada)
     print("cia_seleccionada:", cia_seleccionada)
     print("metodo_seleccionado:", metodo_seleccionado)
     print("producto_cia_seleccionada:", producto_cia_seleccionada)
-
+    print("fee_seleccionado:", fee_seleccionado)
 
 
     try:
@@ -48,6 +49,7 @@ def consulta_resultados(sistema, tarifa, cia, metodo, producto_cia):
                     AND tarifa = '{tarifa_seleccionada}' 
                     AND cia = '{cia_seleccionada}' 
                     AND producto_cia = '{producto_cia_seleccionada}'
+                    AND fee = '{fee_seleccionado}'
             """
             cursor.execute(consulta_datos)
 
@@ -66,7 +68,7 @@ def consulta_resultados(sistema, tarifa, cia, metodo, producto_cia):
                 WHERE sistema = '{sistema_seleccionado}' 
                     AND tarifa = '{tarifa_seleccionada}' 
                     AND cia = '{cia_seleccionada}' 
-                    LIMIT 1
+                    AND fee = '{fee_seleccionado}'
                     
             """
             cursor.execute(consulta_datos_energia)
@@ -79,7 +81,7 @@ def consulta_resultados(sistema, tarifa, cia, metodo, producto_cia):
                 WHERE sistema = '{sistema_seleccionado}' 
                     AND tarifa = '{tarifa_seleccionada}' 
                     AND cia = '{cia_seleccionada}'
-                    LIMIT 1
+                    AND producto_cia = '{producto_cia_seleccionada}'
                     
             """
             cursor.execute(consulta_datos_potencia)
@@ -90,7 +92,7 @@ def consulta_resultados(sistema, tarifa, cia, metodo, producto_cia):
             conn.close()
 
             print("data_energia: ", data_energia)
-            print("data_energia: ", data_potencia)
+            print("data_potencia: ", data_potencia)
             data_total = [data_energia[0] + data_potencia[0]]
             
             print("----Datos totales:", data_total)
@@ -106,7 +108,7 @@ def transformar_precios(precios):
     nuevos_precios = {}
 
     for i, valor in enumerate(precios):
-        clave = f"P{i+1}" if i < 6 else f"P{i-5}."
+        clave = f"p{i+1}" if i < 6 else f"P{i-5}"
         nuevos_precios[clave] = valor
 
     return nuevos_precios
@@ -133,6 +135,11 @@ def cargar_filtros():
         producto_cia = [fila[0] for fila in cursor.fetchall()]
         primer_producto_cia = producto_cia[1] if producto_cia else None
 
+        consulta_fee = f"SELECT DISTINCT fee FROM precios_fijo WHERE cia = '{primera_cia}'"
+        cursor.execute(consulta_fee)
+        fee = [fila[0] for fila in cursor.fetchall()]
+        primer_fee = fee[0] if fee else None
+
         # Cerrar el cursor y la conexión
         cursor.close()
         conn.close()
@@ -146,11 +153,11 @@ def cargar_filtros():
         primer_metodo = metodos[0] if metodos else None
 
         # Parametros necesarios: cia, sistema, tarifa, fee
-        precios = consulta_resultados(primer_sistema, primera_tarifa, primera_cia, primer_metodo, primer_producto_cia)
+        precios = consulta_resultados(primer_sistema, primera_tarifa, primera_cia, primer_metodo, primer_producto_cia, primer_fee)
 
         
         # Crear un diccionario con los resultados
-        resultado_json = {'sistemas': sistemas,'tarifas': tarifas,'cias': cias,'metodos': metodos, 'producto_cia': producto_cia,'precios': precios}
+        resultado_json = {'sistemas': sistemas,'tarifas': tarifas,'cias': cias,'metodos': metodos, 'producto_cia': producto_cia,'precios': precios,'fee':fee}
         # Modificamos el json para añadir etiquetas para los precios.
         resultado_json["precios"] = [transformar_precios(resultado_json["precios"][0])]
 
@@ -170,13 +177,14 @@ def recargar_filtros():
     cia_seleccionada = request.args.get('cia')
     metodo_seleccionado = request.args.get('metodo')
     producto_cia_selecionado = request.args.get('producto_cia')
+    fee_seleccionado = request.args.get('fee')
 
     print(sistema_seleccionado)
     print(tarifa_seleccionada)
     print(cia_seleccionada)
     print(metodo_seleccionado)
     print(producto_cia_selecionado)
-
+    print(fee_seleccionado)
 
     try:
         # Conectar a la base de datos
@@ -204,8 +212,8 @@ def recargar_filtros():
             cursor.execute(consulta_meses)
             meses_index = [fila[0] for fila in cursor.fetchall()]
 
-            consulta_fees = f"SELECT DISTINCT fee FROM precios_index_energia WHERE cia = '{cia_seleccionada}' AND tarifa = '{tarifa_seleccionada}'"
-            cursor.execute(consulta_fees)
+            consulta_fee = f"SELECT DISTINCT fee FROM precios_index_energia WHERE cia = '{cia_seleccionada}' AND tarifa = '{tarifa_seleccionada}'"
+            cursor.execute(consulta_fee)
             fees_index = [fila[0] for fila in cursor.fetchall()]
 
             # Cerrar el cursor y la conexión
@@ -214,7 +222,7 @@ def recargar_filtros():
            
             meses_index = [fecha.strftime('%Y-%m-%d') for fecha in meses_index]
 
-            precios = consulta_resultados(sistema_seleccionado, tarifa_seleccionada, cia_seleccionada, metodo_seleccionado, producto_cia_selecionado)
+            precios = consulta_resultados(sistema_seleccionado, tarifa_seleccionada, cia_seleccionada, metodo_seleccionado, producto_cia_selecionado,fee_seleccionado)
 
             resultado_json = {'tarifa': tarifa_index, 'cia':cia_index, 'producto_cia': producto_cia_index, 'meses': meses_index, 'producto_cia': fees_index, 'precios': precios}
             
@@ -239,18 +247,23 @@ def recargar_filtros():
 
             print("cia:",cia_fijo)
 
-            consulta_producto_cia = f"SELECT DISTINCT producto_cia FROM precios_fijo WHERE cia = '{cia_seleccionada}'"
+            consulta_producto_cia = f"SELECT DISTINCT producto_cia FROM precios_fijo WHERE cia = '{cia_seleccionada}' AND tarifa = '{tarifa_seleccionada}'"
             cursor.execute(consulta_producto_cia)
             producto_cia_fijo = [fila[0] for fila in cursor.fetchall()]
-            
-            print("producto_cia:",producto_cia_fijo)
+            print('producto_cia_fijo', producto_cia_fijo)
+
+            consulta_fee = f"SELECT DISTINCT fee FROM precios_fijo WHERE cia = '{cia_seleccionada}' AND tarifa = '{tarifa_seleccionada}'"
+            cursor.execute(consulta_fee)
+            fee_fijo = [fila[0] for fila in cursor.fetchall()]
+            print("fee:",fee_fijo)
+
             # Cerrar el cursor y la conexión
             cursor.close()
             conn.close()
 
-            precios = consulta_resultados(sistema_seleccionado, tarifa_seleccionada, cia_seleccionada, metodo_seleccionado, producto_cia_selecionado)
+            precios = consulta_resultados(sistema_seleccionado, tarifa_seleccionada, cia_seleccionada, metodo_seleccionado, producto_cia_selecionado, fee_seleccionado)
 
-            resultado_json = {'tarifa': tarifa_fijo, 'cia':cia_fijo, 'producto_cia': producto_cia_fijo, 'precios': precios}
+            resultado_json = {'tarifa': tarifa_fijo, 'cia':cia_fijo, 'producto_cia': producto_cia_fijo,'fee':fee_fijo ,'precios': precios}
             
             resultado_json["precios"] = [transformar_precios(resultado_json["precios"][0])]
 
@@ -267,10 +280,10 @@ def recargar_filtros():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# Nueva ruta para manejar la consulta a la tabla precios_fijo
-#@app.route('/consulta_resultados', methods=['POST'])
-
 
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
