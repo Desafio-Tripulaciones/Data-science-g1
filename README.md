@@ -34,5 +34,6 @@ Creación de endpoints y asignación de variables para facilitar la generación 
 Dashboard de Propuestas:
 Se ha desarrollado un dashboard en Power BI que permite visualizar las propuestas generadas por el asesor.
 (* Los diagramas de clases y el modelo entidad-relación se encuentran en la documentación adjunta).
+![Reporte BI ](https://github.com/Desafio-Tripulaciones/Data-science-g1/blob/main/img/reporteBI.png)
 
 ### Equipo de Data Scientist : Diego Núñez, Manuel Reina, Ana Fernández, July Vargas, Miguel Ruiz 
