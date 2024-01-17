@@ -116,10 +116,17 @@ def transformar_precios(precios):
     nuevos_precios = {}
 
     for i, valor in enumerate(precios):
-        clave = f"p{i+1}" if i < 6 else f"P{i-5}"
+        if i < 6:
+            clave = f"p{i+1}"
+        elif 6 <= i < 12:
+            clave = f"P{i-5}"
+        else:
+            clave = f"PM{i-11}"
+
         nuevos_precios[clave] = valor
 
     return nuevos_precios
+
 
 @app.route('/')
 
@@ -357,6 +364,28 @@ def cargar_precios():
 
             data_energia = cursor.fetchall()
 
+            consulta_datos_media = f"""
+                SELECT 
+                    AVG(p1_) AS media_p1,
+                    AVG(p2_) AS media_p2,
+                    AVG(p3_) AS media_p3,
+                    AVG(p4_) AS media_p4,
+                    AVG(p5_) AS media_p5,
+                    AVG(p6_) AS media_p6
+                FROM precios_index_energia
+                WHERE 
+                    sistema = '{sistema_seleccionado}' 
+                    AND tarifa = '{tarifa_seleccionada}' 
+                    AND cia = '{cia_seleccionada}' 
+                    AND fee = '{fee_seleccionado}'
+                    AND mes BETWEEN 
+                        (DATE '{mes_seleccionado}' - INTERVAL '11 months') AND DATE '{mes_seleccionado}'"""
+
+
+            cursor.execute(consulta_datos_media)
+
+            data_energia_media = cursor.fetchall()
+
             consulta_datos_potencia = f"""
                 SELECT p1, p2, p3, p4, p5, p6
                 FROM precios_index_potencia
@@ -376,15 +405,17 @@ def cargar_precios():
 
             print("data_energia: ", data_energia)
             print("data_potencia: ", data_potencia)
-            data_total = [data_energia[0] + data_potencia[0]]
+            print("data_energia_media:", data_energia_media)
+            data_total = [data_energia[0] + data_potencia[0] + data_energia_media[0]]
             
             resultado_json = {'precios': data_total}
-            resultado_json["precios"] = [transformar_precios(resultado_json["precios"][0])]
+            resultado_json["precios"] = [transformar_precios(resultado_json["precios"][0])] 
             
             # Convertir el diccionario a formato JSON
             json_resultado = json.dumps(resultado_json)
+            
             # Retornar el JSON
-            return json_resultado
+            return  json_resultado
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
