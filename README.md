@@ -7,6 +7,9 @@ La estructura de la base de datos ha sido diseñada para ser perfectamente escal
 Se han recopilado la máxima cantidad de datos posible para facilitar análisis futuros y la implementación de modelos de predicción.
 La base de datos se encuentra normalizada según el modelo de entidad-relación.
 Se ha creado un diagrama de clases para visualizar la estructura de la base de datos.
+
+![Diagrama](https://github.com/Desafio-Tripulaciones/Data-science-g1/blob/main/img/Diagrama.png)
+
 ## 2. Web Scraping
 Acceso a Candela mediante Selenium:
 Se ha implementado el acceso a la plataforma Candela utilizando Selenium.
