@@ -3,9 +3,9 @@ import pandas as pd
 fila_inicial_fijo = 1
 fila_inicial_indexado = 3
 
-fijo = pd.read_excel('precios_luz.xlsx', sheet_name='FIJO', skiprows=fila_inicial_fijo).iloc[:,2:]
-indexado_energia = pd.read_excel('precios_luz.xlsx', sheet_name='INDEXADO', skiprows=fila_inicial_indexado).iloc[:,1:12]
-indexado_potencia = pd.read_excel('precios_luz.xlsx', sheet_name='INDEXADO', skiprows=fila_inicial_indexado).iloc[:,13:24]
+fijo = pd.read_excel('datos/precios_luz.xlsx', sheet_name='FIJO', skiprows=fila_inicial_fijo).iloc[:,2:]
+indexado_energia = pd.read_excel('datos/precios_luz.xlsx', sheet_name='INDEXADO', skiprows=fila_inicial_indexado).iloc[:,1:12]
+indexado_potencia = pd.read_excel('datos/precios_luz.xlsx', sheet_name='INDEXADO', skiprows=fila_inicial_indexado).iloc[:,13:24]
 indexado_potencia = indexado_potencia.dropna()
 
 nombres_columnas_energia = ['SISTEMA', 'TARIFA', 'CIA', 'MES', 'FEE', 'P1.', 'P2.', 'P3.', 'P4.', 'P5.', 'P6.']
@@ -33,9 +33,9 @@ fijo = fijo.rename(columns={'P1':'p1','P2':'p2','P3':'p3','P4':'p4','P5':'p5','P
 indexado_energia = indexado_energia.rename(columns={'p1.':'p1_','p2.':'p2_','p3.':'p3_','p4.':'p4_','p5.':'p5_','p6.':'p6_'})
 indexado_potencia = indexado_potencia.rename(columns={'p1':'p1','p2':'p2','p3':'p3','p4':'p4','p5':'p5','p6':'p6'})
 
-fijo.to_csv('fijo.csv',index=False)
-indexado_energia.to_csv('indexado_energia.csv',index=False)
-indexado_potencia.to_csv('indexado_potencia.csv',index=False)
+fijo.to_csv('datos/fijo.csv',index=False)
+indexado_energia.to_csv('datos/indexado_energia.csv',index=False)
+indexado_potencia.to_csv('datos/indexado_potencia.csv',index=False)
 
 from sqlalchemy import create_engine
 import psycopg2
